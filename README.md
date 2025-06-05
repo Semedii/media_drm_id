@@ -41,11 +41,21 @@ Add `media_drm_id` as a dependency in your `pubspec.yaml`:
 ```yaml
 dependencies:
   media_drm_id: ^0.0.1
+```
+
 Then run:
 
+```bash
 flutter pub get
+```
+
 Import the Package
+
+```dart
 import 'package:media_drm_id/media_drm_id.dart';
+```
+
+```dart
 Usage Example
 import 'package:flutter/material.dart';
 import 'package:media_drm_id/media_drm_id.dart';
@@ -93,6 +103,8 @@ class _MyAppState extends State<MyApp> {
     );
   }
 }
+```
+
 Android Setup
 
 No additional setup is required on the Android side since this plugin uses the official MediaDrm API.
@@ -102,10 +114,10 @@ Make sure your app's minSdkVersion is set to at least 29 (Android 10):
 In android/app/build.gradle:
 
 android {
-    defaultConfig {
-        minSdkVersion 29
-        // other config
-    }
+defaultConfig {
+minSdkVersion 29
+// other config
+}
 }
 How It Works (Technical Details)
 
@@ -119,4 +131,3 @@ The returned byte array is converted to a hex string for use in Flutter.
 This ID is hardware-backed, consistent across app installs, and resistant to factory resets.
 
 It’s ideal for apps requiring a persistent unique device identifier without requesting sensitive permissions.
-```
