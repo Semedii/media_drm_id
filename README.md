@@ -115,11 +115,8 @@ UUID WIDEVINE_UUID = new UUID(0xedef8ba979d64aceL, 0xa3c827dcd51d21edL);
 MediaDrm mediaDrm = new MediaDrm(WIDEVINE_UUID);
 byte[] deviceId = mediaDrm.getPropertyByteArray("deviceUniqueId");
 The returned byte array is converted to a hex string for use in Flutter.
+
 This ID is hardware-backed, consistent across app installs, and resistant to factory resets.
+
 It’s ideal for apps requiring a persistent unique device identifier without requesting sensitive permissions.
-Limitations
-
-Android-only: This plugin only works on Android devices.
-Requires Android 10+: On devices below Android 10, it may not function correctly or could return an error.
-
 ```
