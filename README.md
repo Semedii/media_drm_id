@@ -40,7 +40,7 @@ Add `media_drm_id` as a dependency in your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  media_drm_id: ^0.0.1
+  media_drm_id: ^0.0.3
 ```
 
 Then run:

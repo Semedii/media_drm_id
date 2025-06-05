@@ -1,6 +1,6 @@
 name: media_drm_id
 description: A Flutter plugin to retrieve Android MediaDrm device ID securely.
-version: 0.0.2
+version: 0.0.3
 homepage: https://github.com/Semedii/media_drm_id
 
 
