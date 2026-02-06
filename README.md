@@ -1,6 +1,6 @@
 # media_drm_id
 
-A Flutter plugin to securely retrieve the Android MediaDrm device ID (Widevine UUID).
+A Flutter plugin to retrieve the Android Widevine MediaDrm device-unique ID as a hexadecimal string.
 
 ---
 
@@ -40,7 +40,7 @@ Add `media_drm_id` as a dependency in your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  media_drm_id: ^0.0.3
+  media_drm_id: ^1.0.0
 ```
 
 Then run:
@@ -55,9 +55,11 @@ Import the Package
 import 'package:media_drm_id/media_drm_id.dart';
 ```
 
-```dart
 Usage Example
+
+```dart
 import 'package:flutter/material.dart';
+
 import 'package:media_drm_id/media_drm_id.dart';
 
 void main() {
@@ -65,29 +67,41 @@ void main() {
 }
 
 class MyApp extends StatefulWidget {
-  const MyApp({Key? key}) : super(key: key);
+  const MyApp({super.key});
+
   @override
   State<MyApp> createState() => _MyAppState();
 }
 
 class _MyAppState extends State<MyApp> {
-  String? _deviceId;
+  String _drmId = 'Loading...';
 
   @override
   void initState() {
     super.initState();
-    _fetchDeviceId();
+    _fetchDrmId();
   }
 
-  Future<void> _fetchDeviceId() async {
-    String id;
+  Future<void> _fetchDrmId() async {
+    String drmId = 'Unknown';
+
     try {
-      id = await MediaDrmId.getId();
+      final String? id = await MediaDrmId.getMediaDrmId();
+      if (id != null && id.isNotEmpty) {
+        drmId = id;
+      } else {
+        drmId = 'No DRM ID returned (device may not support Widevine L3)';
+      }
+    } on PlatformException catch (e) {
+      drmId = 'Error: ${e.code} - ${e.message}';
     } catch (e) {
-      id = 'Failed to get device ID: $e';
+      drmId = 'Unexpected error: $e';
     }
+
+    if (!mounted) return;
+
     setState(() {
-      _deviceId = id;
+      _drmId = drmId;
     });
   }
 
@@ -95,9 +109,22 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       home: Scaffold(
-        appBar: AppBar(title: const Text('MediaDrm Device ID Example')),
-        body: Center(
-          child: Text(_deviceId ?? 'Loading...'),
+        appBar: AppBar(
+          title: const Text('Media DRM ID Example'),
+        ),
+        body: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Center(
+            child: SelectableText(
+              'Media DRM ID:\n$_drmId',
+              style: const TextStyle(fontSize: 16, fontFamily: 'monospace'),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: _fetchDrmId,
+          child: const Icon(Icons.refresh),
         ),
       ),
     );
@@ -105,28 +132,33 @@ class _MyAppState extends State<MyApp> {
 }
 ```
 
-Android Setup
+Platform Support
 
-No additional setup is required on the Android side since this plugin uses the official MediaDrm API.
+- Android: Supported (tested on API 21+; Widevine L3 required for reliable results)
+- iOS / Web / Desktop: Not supported (MediaDrm is Android-specific)
 
-Make sure your app's minSdkVersion is set to at least 29 (Android 10):
+No minSdkVersion restriction needed — works down to API 18, but best results on modern devices.
 
-In android/app/build.gradle:
+Important Notes & Limitations
 
-android {
-defaultConfig {
-minSdkVersion 29
-// other config
-}
-}
+- Returns a lowercase hex string (typically 32–64 characters) on supported devices.
+- Returns null if:
+  - Widevine is not supported/provisioned
+  - Device lacks L3 security level
+  - Rare errors occur
+
+- Common on emulators: Usually null (no hardware Widevine).
+- The ID is persistent: Survives app uninstall/reinstall and often factory resets.
+- Privacy: This is a hardware identifier — use responsibly and comply with privacy laws (e.g., disclose in policy if used for tracking).
+
 How It Works (Technical Details)
+The plugin uses Android's MediaDrm with the official Widevine UUID:
 
-This plugin accesses Android’s MediaDrm API with the Widevine UUID:
-
-UUID WIDEVINE_UUID = new UUID(0xedef8ba979d64aceL, 0xa3c827dcd51d21edL);
-MediaDrm mediaDrm = new MediaDrm(WIDEVINE_UUID);
-byte[] deviceId = mediaDrm.getPropertyByteArray("deviceUniqueId");
-The returned byte array is converted to a hex string for use in Flutter.
+```kotlin
+val widevineUUID = UUID.fromString("edef8ba9-79d6-4ace-a3c8-27dcd51d21ed")
+val mediaDrm = MediaDrm(widevineUUID)
+val deviceIdBytes = mediaDrm.getPropertyByteArray(MediaDrm.PROPERTY_DEVICE_UNIQUE_ID)
+```
 
 This ID is hardware-backed, consistent across app installs, and resistant to factory resets.
 

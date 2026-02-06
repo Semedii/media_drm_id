@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'dart:async';
-
 import 'package:flutter/services.dart';
+
 import 'package:media_drm_id/media_drm_id.dart';
 
 void main() {
@@ -16,34 +15,34 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  String _platformVersion = 'Unknown';
-  final _mediaDrmIdPlugin = MediaDrmId();
+  String _drmId = 'Loading...';
 
   @override
   void initState() {
     super.initState();
-    initPlatformState();
+    initDrmId();
   }
 
-  // Platform messages are asynchronous, so we initialize in an async method.
-  Future<void> initPlatformState() async {
-    String platformVersion;
-    // Platform messages may fail, so we use a try/catch PlatformException.
-    // We also handle the message potentially returning null.
+  Future<void> initDrmId() async {
+    String drmId = 'Unknown';
+
     try {
-      platformVersion =
-          await _mediaDrmIdPlugin.getPlatformVersion() ?? 'Unknown platform version';
-    } on PlatformException {
-      platformVersion = 'Failed to get platform version.';
+      final String? id = await MediaDrmId.getMediaDrmId();
+      if (id != null && id.isNotEmpty) {
+        drmId = id;
+      } else {
+        drmId = 'No DRM ID returned (device may not support Widevine L3)';
+      }
+    } on PlatformException catch (e) {
+      drmId = 'Error: ${e.code} - ${e.message}';
+    } catch (e) {
+      drmId = 'Unexpected error: $e';
     }
 
-    // If the widget was removed from the tree while the asynchronous platform
-    // message was in flight, we want to discard the reply rather than calling
-    // setState to update our non-existent appearance.
     if (!mounted) return;
 
     setState(() {
-      _platformVersion = platformVersion;
+      _drmId = drmId;
     });
   }
 
@@ -51,11 +50,20 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       home: Scaffold(
-        appBar: AppBar(
-          title: const Text('Plugin example app'),
+        appBar: AppBar(title: const Text('Media DRM ID Plugin Example')),
+        body: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Center(
+            child: SelectableText(
+              'Media DRM ID:\n$_drmId',
+              style: const TextStyle(fontSize: 16, fontFamily: 'monospace'),
+              textAlign: TextAlign.center,
+            ),
+          ),
         ),
-        body: Center(
-          child: Text('Running on: $_platformVersion\n'),
+        floatingActionButton: FloatingActionButton(
+          onPressed: initDrmId,
+          child: const Icon(Icons.refresh),
         ),
       ),
     );
